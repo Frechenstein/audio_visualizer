@@ -1,4 +1,4 @@
-package main;
+package de.audio_vis_theeJ.audio_visualizer.main;
 
 import javax.swing.JFrame;
 
@@ -19,7 +19,7 @@ public class Main {
 		window.setLocationRelativeTo(null);
 		window.setVisible(true);
 		
-		
+		windowPanel.startWindowThread();
 		
 	}
 
