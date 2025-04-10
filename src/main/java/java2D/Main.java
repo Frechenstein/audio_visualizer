@@ -1,4 +1,4 @@
-package de.audio_vis_theeJ.audio_visualizer.main;
+package java2D;
 
 import javax.swing.JFrame;
 

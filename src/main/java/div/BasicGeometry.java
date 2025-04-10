@@ -1,4 +1,4 @@
-package example;
+package div;
 
 import java.util.Random;
 

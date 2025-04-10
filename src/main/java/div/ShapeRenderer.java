@@ -1,8 +1,8 @@
-package example;
+package div;
 
 import javax.swing.*;
 
-import example.BasicGeometry.Float32Array;
+import div.BasicGeometry.Float32Array;
 
 import java.awt.*;
 import java.util.Random;
