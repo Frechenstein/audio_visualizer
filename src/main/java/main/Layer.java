@@ -16,14 +16,11 @@ public class Layer {
 			this.rgba[i] = rgba[i];
 		}
 		this.coordinates = new ArrayList<>();
+		this.coordinates = createShape();
 	}
 	
 	public ArrayList<Coordinate3D> getCoordinates() {
 		return coordinates;
-	}
-	
-	public void setSquareCoords() {
-		coordinates = createShape();
 	}
 	
 	// GETTER AND SETTER FOR COLORS
@@ -48,8 +45,12 @@ public class Layer {
 	}
 	
     public static ArrayList<Coordinate3D> createShape() {
+    	return createSquare();
+    }
+    
+    public static ArrayList<Coordinate3D> createSquare() {
         ArrayList<Coordinate3D> coordinates = new ArrayList<>();
-        float initZ = 800; // Start-Tiefe, je weiter, desto kleiner erscheint das Bild
+        float initZ = 3000; // Start-Tiefe, je weiter, desto kleiner erscheint das Bild
         
         coordinates.add(new Coordinate3D(260, 0, initZ));
         coordinates.add(new Coordinate3D(0, 260, initZ));

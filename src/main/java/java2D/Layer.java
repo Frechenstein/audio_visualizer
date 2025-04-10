@@ -157,7 +157,7 @@ public class Layer {
      */
     public static List<Coordinate3D> createShape() {
         List<Coordinate3D> coordinates = new ArrayList<>();
-        float initZ = 800; // Start-Tiefe, je weiter, desto kleiner erscheint das Bild
+        float initZ = 1000; // Start-Tiefe, je weiter, desto kleiner erscheint das Bild
         
         coordinates.add(new Coordinate3D(260, 0, initZ));
         coordinates.add(new Coordinate3D(0, 260, initZ));

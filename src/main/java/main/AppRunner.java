@@ -29,8 +29,8 @@ public class AppRunner {
     private float zoom = 1.0f; // Zoomwert, wird im Laufe der Zeit verändert
 
     // Fensterbreite und -höhe (können dynamisch sein)
-    private int windowWidth = 1280;
-    private int windowHeight = 720;
+    private int windowWidth = 1920;
+    private int windowHeight = 1080;
     
     private Renderer renderer;
 
@@ -55,7 +55,7 @@ public class AppRunner {
         // Für MacOS: glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
 
         // Fenster erstellen
-        window = glfwCreateWindow(windowWidth, windowHeight, "OpenGL LWJGL", NULL, NULL);
+        window = glfwCreateWindow(windowWidth, windowHeight, "AudioVis", NULL, NULL);
         if (window == NULL) {
             throw new RuntimeException("Creation of window failed");
         }
@@ -82,6 +82,8 @@ public class AppRunner {
 
         // Lade die Textur (128x128, mit transparentem Hintergrund)
         textureId = loadTexture("src/main/res/galaxy.png");
+        
+        this.renderer = new Renderer(this, textureId, windowWidth, windowHeight);
     }
 
     /**
@@ -89,18 +91,21 @@ public class AppRunner {
      * Der Vertex-Shader erhält eine Uniform "scale" (Zoom) sowie "aspect" für die Korrektur des Seitenverhältnisses.
      */
     private int createShaderProgram() {
-        String vertexShaderSource =
-                "#version 330 core\n" +
-                "layout(location = 0) in vec2 position;\n" +
-                "layout(location = 1) in vec2 texCoords;\n" +
-                "uniform float scale;\n" +
-                "uniform float aspect;\n" +  // aspect = windowWidth / windowHeight
-                "out vec2 passTexCoords;\n" +
-                "void main(){\n" +
-                "    // Korrigiere die x-Komponente, sodass ein quadratischer Effekt entsteht\n" +
-                "    gl_Position = vec4(scale * (position.x / aspect), scale * position.y, 0.0, 1.0);\n" +
-                "    passTexCoords = texCoords;\n" +
-                "}\n";
+    	String vertexShaderSource =
+    		    "#version 330 core\n" +
+    		    "layout(location = 0) in vec2 position;\n" +
+    		    "layout(location = 1) in vec2 texCoords;\n" +
+    		    "uniform float scale;\n" +
+    		    "uniform float aspect;\n" +       // aspect = windowWidth / windowHeight
+    		    "uniform vec2 offset;  // Offset in NDC\n" +
+    		    "out vec2 passTexCoords;\n" +
+    		    "void main(){\n" +
+    		    "    // Teile die x-Komponente durch aspect, um das Seitenverhältnis zu korrigieren\n" +
+    		    "    vec2 pos = vec2(position.x / aspect, position.y);\n" +
+    		    "    gl_Position = vec4(pos * scale + offset, 0.0, 1.0);\n" +
+    		    "    passTexCoords = texCoords;\n" +
+    		    "}\n";
+
 
         String fragmentShaderSource =
                 "#version 330 core\n" +
@@ -231,6 +236,12 @@ public class AppRunner {
         while (!glfwWindowShouldClose(window)) {
             glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
+            renderer.update();
+            
+            renderer.render();
+            
+            
+            /*
             // Aktiviere das Shader-Programm
             glUseProgram(shaderProgram);
 
@@ -249,6 +260,8 @@ public class AppRunner {
             glBindVertexArray(vaoId);
             glDrawArrays(GL_TRIANGLES, 0, 6);
             glBindVertexArray(0);
+			*/
+
 
             glfwSwapBuffers(window);
             glfwPollEvents();

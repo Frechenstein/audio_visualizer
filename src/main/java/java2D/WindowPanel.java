@@ -97,15 +97,15 @@ public class WindowPanel extends JPanel implements Runnable {
 
     public void update() {
     	
-    	/*
+    	
     	float redScale = redMultiplier = (float) Math.abs(Math.sin(System.currentTimeMillis() * 0.001));
         float greenScale = (float) Math.abs(Math.cos(System.currentTimeMillis() * 0.001));
         float blueScale = (float) Math.abs(Math.sin(System.currentTimeMillis() * 0.002));
-        */
         
-        //layer.setColorMultiplier(redScale, greenScale, blueScale);
         
-    	layer.setColorMultiplier(1.0f, 0.35f, 0.0f);
+        layer.setColorMultiplier(redScale, greenScale, blueScale);
+        
+    	//layer.setColorMultiplier(1.0f, 0.35f, 0.0f);
     	
         //layer.setScaleFactor(layer.getScaleFactor() * 1.01f);
     }
