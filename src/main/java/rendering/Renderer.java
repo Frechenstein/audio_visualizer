@@ -1,4 +1,4 @@
-package main;
+package rendering;
 
 import static org.lwjgl.opengl.GL11.GL_TEXTURE_2D;
 import static org.lwjgl.opengl.GL11.GL_TRIANGLES;
@@ -16,13 +16,19 @@ import static org.lwjgl.opengl.GL30.glBindVertexArray;
 import java.util.ArrayList;
 import java.util.List;
 
+import main.AppRunner;
+import main.Layer;
+import main.Layer.Coordinate3D;
+
 public class Renderer {
     
-    private List<Layer> layers;
-    // Beispielhafte Parameter für die Perspektive (z. B. focalLength und den Bildschirmmittelpunkt)
-    private float focalLength = 300.0f;
     private int windowWidth, windowHeight;
     AppRunner ar;
+	
+    private List<Layer> layers;
+
+    private float focalLength = 300.0f;
+    float speed = 240.0f;
     
     // Hier übergibst du auch, welche Textur genutzt werden soll (dies könnte je nach Layer variieren)
     private int textureId;
@@ -52,9 +58,7 @@ public class Renderer {
     }
     
     // Aktualisiert ggf. Logik wie Bewegung in Z-Richtung (Zoom, etc.)
-    public void update() {
-        // Beispiel: update für jeden Layer; z.B. könnte man die z-Koordinate für den Zoom anpassen
-    	
+    public void update(float deltaTime) {
     	int newLayers = 0;
     	Layer removeLayer = null;
     	
@@ -62,15 +66,14 @@ public class Renderer {
         	
         	boolean summonNewLayer = false;
         	
-            for (Layer.Coordinate3D coord : layer.getCoordinates()) {
-                // Simuliere, dass jedes Objekt in Richtung Kamera rückt:
-                coord.z -= 2.0f;  // Bewegungsgeschwindigkeit in Z-Richtung
+            for (Layer.Coordinate3D coord : layer.getCoordinates()) { 
+                coord.z -= speed * deltaTime; 
                 if(coord.z == 2900 && !summonNewLayer) {
                 	summonNewLayer = true;
                 	newLayers++;
                 }
                 if(coord.z < 30) {
-                    removeLayer = layer; // Reset, um den unendlichen Zoom-Effekt zu simulieren
+                    removeLayer = layer;
                 }
             }
         }
@@ -89,8 +92,6 @@ public class Renderer {
     
     // Rendert alle Layer
     public void render() {
-        // Beispiel: aktiviere den Shader, binde die Textur etc.
-        // (Hier gehst du davon aus, dass du bereits ein Shader-Programm hast, das z. B. "scale" und "aspect" als Uniforms erwartet.)
         glUseProgram(ar.getShaderProgram());  // Ersetze durch deinen Shader-Programm-Handle
         
         // Setze das Fenster-/Seitenverhältnis als Uniform, wenn nötig:
@@ -105,7 +106,6 @@ public class Renderer {
         float centerY = windowHeight / 2.0f;
         
         // Für jeden Layer die Farbe als Uniform setzen
-        // Hier kannst du z.B. eine Uniform "layerColor" erwarten:
         for (Layer layer : layers) {
             int colorLocation = glGetUniformLocation(ar.getShaderProgram(), "layerColor");
             glUniform4f(colorLocation, layer.getColor()[0], layer.getColor()[1], layer.getColor()[2], layer.getColor()[3]);
@@ -131,7 +131,6 @@ public class Renderer {
                 glUniform1f(scaleLocation, finalScale);
                 
                 // Zeichne dann ein Quad an dieser Position
-                // Annahme: Du hast bereits einen VAO/VBO für ein quad erstellt
                 glBindVertexArray(ar.getVaoId());
                 glDrawArrays(GL_TRIANGLES, 0, 6);
                 glBindVertexArray(0);
