@@ -11,14 +11,15 @@ public class Layer {
 	
 	private float[] rgba = new float[4];
 	private float rotationAngle = 0.0f;
+	public float time = 0.0f;
 	
 	
-	public Layer(float[] rgba) {
+	public Layer(float[] rgba, int initZ) {
 		for(int i = 0; i < this.rgba.length; i++) {
 			this.rgba[i] = rgba[i];
 		}
 		this.coordinates = new ArrayList<>();
-		this.coordinates = createShape();
+		this.coordinates = createShape(initZ);
 	}
 	
 	public ArrayList<Coordinate3D> getCoordinates() {
@@ -55,13 +56,12 @@ public class Layer {
 		}
 	}
 	
-    public static ArrayList<Coordinate3D> createShape() {
-    	return createSquare();
+    public static ArrayList<Coordinate3D> createShape(int initZ) {
+    	return createSquare(initZ);
     }
     
-    public static ArrayList<Coordinate3D> createSquare() {
+    public static ArrayList<Coordinate3D> createSquare(int initZ) {
         ArrayList<Coordinate3D> coordinates = new ArrayList<>();
-        float initZ = 5000; // Start-Tiefe, je weiter, desto kleiner erscheint das Bild
         
         coordinates.add(new Coordinate3D(260, 0, initZ));
         coordinates.add(new Coordinate3D(0, 260, initZ));

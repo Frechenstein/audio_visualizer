@@ -40,6 +40,7 @@ import org.lwjgl.opengl.GL;
 import rendering.Quad;
 import rendering.Renderer;
 import rendering.ShaderProgram;
+import utility.Utils;
 
 public class AppRunner {
 
@@ -52,16 +53,18 @@ public class AppRunner {
     private int windowWidth = 1920;
     private int windowHeight = 1080;
     private boolean fullscreen = false;
-    private boolean surface = true;
+    private boolean surface = false;
     
     private int VIRTUAL_WIDTH = 1920; // 16:9
     //private int VIRTUAL_WIDTH = 1620; // 3:2
     private int VIRTUAL_HEIGHT = 1080;
     
-    private boolean debugMode = false;
+    private int initZ = 5000;
     
     private Renderer renderer;
     private ShaderProgram shader;
+    
+    private boolean debugMode = false;
 
     public void run() {
         init();
@@ -85,7 +88,7 @@ public class AppRunner {
         
         Long monitor = NULL;
         
-        if(fullscreen) {
+        if(fullscreen && !debugMode) {
         	if(surface) VIRTUAL_WIDTH = 1620;
         	
         	// Hole alle verfügbaren Monitore
@@ -96,7 +99,7 @@ public class AppRunner {
 
         	// Wähle den gewünschten Monitor aus (z.B. 2. Monitor, falls vorhanden)
         	if (monitors.limit() >= 2) {
-        		monitor = monitors.get(1); // Index 1 entspricht dem zweiten Monitor
+        		monitor = monitors.get(0); // Index 1 entspricht dem zweiten Monitor
         	} else {
         		monitor = glfwGetPrimaryMonitor(); // Fallback auf den primären Monitor
         	}
@@ -138,8 +141,13 @@ public class AppRunner {
 
         // Lade die Textur (128x128, mit transparentem Hintergrund)
         textureId = Utils.loadTexture("src/main/res/galaxy.png");
+        //textureId = Utils.loadTexture("src/main/res/time.png");
         
-        this.renderer = new Renderer(this, textureId, VIRTUAL_WIDTH, VIRTUAL_HEIGHT);
+        if(debugMode) {
+        	initZ = 500;
+        }
+        
+        this.renderer = new Renderer(this, textureId, VIRTUAL_WIDTH, VIRTUAL_HEIGHT, initZ);
     }
     
     /**

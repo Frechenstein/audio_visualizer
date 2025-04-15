@@ -18,35 +18,56 @@ import java.util.List;
 
 import main.AppRunner;
 import main.Layer;
-import main.Layer.Coordinate3D;
+import utility.Timer;
 
 public class Renderer {
     
     private int windowWidth, windowHeight;
     AppRunner ar;
     
+    Timer timer;
+    
     private int textureId;
 	
     private List<Layer> layers;
+    public int initZ = 5000;
+    int layerDistance = 100;
 
     private float focalLength = 300.0f;
     float speed = 480.0f;
     
+    Effects effects;
+    
     private float rotationAngle = 0.0f; 
-    float rotationSpeed = 25.0f;
-    int rotationMode = 0; // 0: no rotation, 1: whole shape rotates, 2: layers rotate separate
+    float rotationSpeed = 20.0f;
+    /**
+     * 0: no rotation
+     * 1-3: whole shape rotates; 1: clockwise; 2: counterclockwise; 3: back and forth
+     * 4-6: every layer has  rotation; 4: counterclockwise; 5; clockwise; 6: back and forth
+     */
+    int rotationMode = 6; 
     
     private float baseScale = 0.15f;
     
-    public Renderer(AppRunner ar, int textureId, int windowWidth, int windowHeight) {
+    public Renderer(AppRunner ar, int textureId, int windowWidth, int windowHeight, int initZ) {
         this.ar = ar;
     	this.textureId = textureId;
         this.windowWidth = windowWidth;
         this.windowHeight = windowHeight;
-        layers = new ArrayList<>();
         
-        float[] rgbaLayer1 = {1.0f, 1.0f, 1.0f, 1.0f};
-        layers.add(new Layer(rgbaLayer1));
+        timer = new Timer(15.0);
+        
+        layers = new ArrayList<>();
+        effects = new Effects(this);
+        
+        this.initZ = initZ;
+        
+        float[] rgba = {1.0f, 1.0f, 1.0f, 1.0f};
+        layers.add(new Layer(rgba, initZ));
+        
+        if(rotationMode < 0) {
+        	rotationMode = 0;
+        }
     }
     
     public Renderer(List<Layer> layers, int textureId, int windowWidth, int windowHeight) {
@@ -62,6 +83,16 @@ public class Renderer {
     
     // Aktualisiert ggf. Logik wie Bewegung in Z-Richtung (Zoom, etc.)
     public void update(float deltaTime) {
+
+    	/*
+    	if(timer.isElapsed()) {
+    		timer.reset();
+    		if(rotationMode < 7) {
+    			rotationMode++;
+    		}
+    	}
+    	*/
+    	
     	int newLayers = 0;
     	Layer removeLayer = null;
     	
@@ -71,7 +102,7 @@ public class Renderer {
         	
             for (Layer.Coordinate3D coord : layer.getCoordinates()) { 
                 coord.z -= speed * deltaTime; 
-                if(coord.z == 4900 && !summonNewLayer) {
+                if(coord.z == initZ - layerDistance && !summonNewLayer) {
                 	summonNewLayer = true;
                 	newLayers++;
                 }
@@ -80,32 +111,24 @@ public class Renderer {
                 }
             }
             
-            if(rotationMode == 2) {
-            	float angle = layer.getRotationAngle() + rotationSpeed * deltaTime;
-                if (angle >= 360.0f) {
-                    angle -= 360.0f;
-                }
-                layer.setRotationAngle(angle);
+            if(rotationMode - 3 > 0) {
+            	layer.setRotationAngle(effects.calculateLayerAngle(layer, deltaTime));
             }
         }
         
         for(int l = 0; l < newLayers; l++) {
             //float[] rgba = {1.0f, 1.0f, 1.0f, 1.0f};
         	float[] rgba = {(float) Math.random(), (float) Math.random(), (float) Math.random(), (float) Math.random()};
-            layers.add(0, new Layer(rgba));
+            layers.add(0, new Layer(rgba, initZ));
         }
         
         if(removeLayer != null) {
         	layers.remove(removeLayer);
         }
         
-        if(rotationMode == 1) {
-            rotationAngle += rotationSpeed * deltaTime;
-            if (rotationAngle >= 360.0f) {
-                rotationAngle -= 360.0f;
-            }
+        if(rotationMode - 4 < 0) {
+        	rotationAngle = effects.calculateRotationAngle(rotationAngle, deltaTime);
         }
-   
     }
     
     // Rendert alle Layer
@@ -121,16 +144,13 @@ public class Renderer {
         float centerX = windowWidth / 2.0f;
         float centerY = windowHeight / 2.0f;
         
-        float angleRad = 0.0f;
         float cosAngle = 1.0f;
         float sinAngle = 0.0f;
         
-        if(rotationMode == 0 || rotationMode == 1) {
-            angleRad = (float) Math.toRadians(rotationAngle);
-            cosAngle = (float) Math.cos(angleRad);
-            sinAngle = (float) Math.sin(angleRad);
-            /*System.out.println("RotAngle: " + rotationAngle + " angleRad: " 
-                    + angleRad + " cosAngle: " + cosAngle + " sinAngle: " + sinAngle);*/
+        if(rotationMode - 4 < 0) {
+    		float[] angles = effects.getAngles(rotationAngle);
+            cosAngle = angles[0];
+            sinAngle = angles[1];
         }
         
         for (Layer layer : layers) {
@@ -138,11 +158,11 @@ public class Renderer {
             glUniform4f(colorLocation, layer.getColor()[0], layer.getColor()[1], layer.getColor()[2], layer.getColor()[3]);
             
             for (Layer.Coordinate3D coord : layer.getCoordinates()) {
-            	
-            	if(rotationMode == 2) {
-                    angleRad = (float) Math.toRadians(layer.getRotationAngle());
-                    cosAngle = (float) Math.cos(angleRad);
-                    sinAngle = (float) Math.sin(angleRad);
+
+            	if(rotationMode - 3 > 0) {
+            		float[] angles = effects.getAngles(layer.getRotationAngle());
+                    cosAngle = angles[0];
+                    sinAngle = angles[1];
             	}
 
                 float computedScale = focalLength / coord.z;
@@ -154,7 +174,6 @@ public class Renderer {
                 float screenX = centerX + (rotatedX * computedScale);
                 float screenY = centerY - (rotatedY * computedScale);
                 
-        
                 float ndcX = (screenX / (windowWidth / 2.0f)) - 1.0f;
                 float ndcY = 1.0f - (screenY / (windowHeight / 2.0f));
 
