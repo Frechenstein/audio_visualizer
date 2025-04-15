@@ -55,8 +55,9 @@ public class ShaderProgram {
                 "in vec2 passTexCoords;\n" +
                 "out vec4 outColor;\n" +
                 "uniform sampler2D texSampler;\n" +
+                "uniform vec4 layerColor;\n" + 
                 "void main(){\n" +
-                "    outColor = texture(texSampler, passTexCoords);\n" +
+                "    outColor = texture(texSampler, passTexCoords) * layerColor;\n" +
                 "}\n";
 
         int vertexShader = glCreateShader(GL_VERTEX_SHADER);

@@ -1,17 +1,45 @@
 package main;
 
+import static org.lwjgl.glfw.GLFW.GLFW_CONTEXT_VERSION_MAJOR;
+import static org.lwjgl.glfw.GLFW.GLFW_CONTEXT_VERSION_MINOR;
+import static org.lwjgl.glfw.GLFW.GLFW_OPENGL_CORE_PROFILE;
+import static org.lwjgl.glfw.GLFW.GLFW_OPENGL_PROFILE;
+import static org.lwjgl.glfw.GLFW.glfwCreateWindow;
+import static org.lwjgl.glfw.GLFW.glfwDestroyWindow;
+import static org.lwjgl.glfw.GLFW.glfwGetMonitors;
+import static org.lwjgl.glfw.GLFW.glfwGetPrimaryMonitor;
+import static org.lwjgl.glfw.GLFW.glfwGetTime;
+import static org.lwjgl.glfw.GLFW.glfwGetVideoMode;
+import static org.lwjgl.glfw.GLFW.glfwInit;
+import static org.lwjgl.glfw.GLFW.glfwMakeContextCurrent;
+import static org.lwjgl.glfw.GLFW.glfwPollEvents;
+import static org.lwjgl.glfw.GLFW.glfwShowWindow;
+import static org.lwjgl.glfw.GLFW.glfwSwapBuffers;
+import static org.lwjgl.glfw.GLFW.glfwSwapInterval;
+import static org.lwjgl.glfw.GLFW.glfwTerminate;
+import static org.lwjgl.glfw.GLFW.glfwWindowHint;
+import static org.lwjgl.glfw.GLFW.glfwWindowShouldClose;
+import static org.lwjgl.opengl.GL11.GL_BLEND;
+import static org.lwjgl.opengl.GL11.GL_COLOR_BUFFER_BIT;
+import static org.lwjgl.opengl.GL11.GL_DEPTH_BUFFER_BIT;
+import static org.lwjgl.opengl.GL11.GL_ONE_MINUS_SRC_ALPHA;
+import static org.lwjgl.opengl.GL11.GL_SRC_ALPHA;
+import static org.lwjgl.opengl.GL11.glBlendFunc;
+import static org.lwjgl.opengl.GL11.glClear;
+import static org.lwjgl.opengl.GL11.glDeleteTextures;
+import static org.lwjgl.opengl.GL11.glEnable;
+import static org.lwjgl.opengl.GL11.glViewport;
+import static org.lwjgl.opengl.GL20.glDeleteProgram;
+import static org.lwjgl.opengl.GL30.glDeleteVertexArrays;
+import static org.lwjgl.system.MemoryUtil.NULL;
+
+import org.lwjgl.PointerBuffer;
 import org.lwjgl.glfw.GLFWErrorCallback;
 import org.lwjgl.opengl.GL;
 
 import rendering.Quad;
 import rendering.Renderer;
 import rendering.ShaderProgram;
-
-import static org.lwjgl.glfw.GLFW.*;
-import static org.lwjgl.opengl.GL11.*;
-import static org.lwjgl.opengl.GL20.*;
-import static org.lwjgl.opengl.GL30.*;
-import static org.lwjgl.system.MemoryUtil.*;
 
 public class AppRunner {
 
@@ -23,7 +51,11 @@ public class AppRunner {
     // Fensterbreite und -höhe (können dynamisch sein)
     private int windowWidth = 1920;
     private int windowHeight = 1080;
-    private boolean fullscreen = false;
+    private boolean fullscreen = true;
+    
+    private int VIRTUAL_WIDTH = 1920; // 16:9
+    //private int VIRTUAL_WIDTH = 1620; // 3:2
+    private int VIRTUAL_HEIGHT = 1080;
     
     private Renderer renderer;
     private ShaderProgram shader;
@@ -51,13 +83,25 @@ public class AppRunner {
         Long monitor = NULL;
         
         if(fullscreen) {
-            long primaryMonitor = glfwGetPrimaryMonitor();
-            var vidMode = glfwGetVideoMode(primaryMonitor);
-            
-            windowWidth = vidMode.width();
-            windowHeight = vidMode.height();
-            
-            monitor = primaryMonitor;
+        	// Hole alle verfügbaren Monitore
+        	PointerBuffer monitors = glfwGetMonitors();
+        	if (monitors == null || monitors.limit() == 0) {
+        	    throw new RuntimeException("Keine Monitore gefunden");
+        	}
+
+        	// Wähle den gewünschten Monitor aus (z.B. 2. Monitor, falls vorhanden)
+        	if (monitors.limit() >= 2) {
+        		monitor = monitors.get(1); // Index 1 entspricht dem zweiten Monitor
+        	} else {
+        		monitor = glfwGetPrimaryMonitor(); // Fallback auf den primären Monitor
+        	}
+
+        	// Hole den Video-Modus des ausgewählten Monitors
+        	var vidMode = glfwGetVideoMode(monitor);
+
+        	// Setze Fensterbreite und -höhe anhand des gewählten Monitors
+        	windowWidth = vidMode.width();
+        	windowHeight = vidMode.height();
         }
 
         // Fenster erstellen
@@ -90,8 +134,33 @@ public class AppRunner {
         // Lade die Textur (128x128, mit transparentem Hintergrund)
         textureId = Utils.loadTexture("src/main/res/galaxy.png");
         
-        this.renderer = new Renderer(this, textureId, windowWidth, windowHeight);
+        this.renderer = new Renderer(this, textureId, VIRTUAL_WIDTH, VIRTUAL_HEIGHT);
     }
+    
+    /**
+     * Unfinished - too much lag when using 
+     */
+    /*
+    private void updateViewport() {
+    	double targetAspect = (double) VIRTUAL_WIDTH / VIRTUAL_HEIGHT;
+    	double windowAspect = (double) windowWidth / windowHeight;
+    	
+    	int vpX = 0;
+    	int vpY = 0;
+    	int vpWidth = windowWidth;
+    	int vpHeight = windowHeight;
+    	
+    	if(windowAspect > targetAspect) {
+    		vpWidth = (int)(windowHeight * targetAspect);
+    		vpX = (windowWidth - vpWidth) / 2;
+    	} else if (windowAspect < targetAspect) {
+    		vpHeight = (int)(windowWidth / targetAspect);
+    		vpY = (windowHeight - vpHeight) / 2;
+    	}
+    	
+    	glViewport(vpX, vpY, vpWidth, vpHeight);
+    }
+    */
     
     public int getShaderProgram() {
     	return shaderProgram;

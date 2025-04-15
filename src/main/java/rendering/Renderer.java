@@ -79,7 +79,7 @@ public class Renderer {
         }
         
         for(int l = 0; l < newLayers; l++) {
-            float[] rgbaLayer1 = {1.0f, 1.0f, 1.0f, 1.0f};
+            float[] rgbaLayer1 = {1.0f, 0.0f, 0.0f, 1.0f};
             layers.add(new Layer(rgbaLayer1));
         }
         
