@@ -17,13 +17,14 @@ public class WindowPanel extends JPanel implements Runnable {
     // SCREEN SETTINGS
     public int screenWidth = 1280;
     public int screenHeight = 720;
-    boolean coordsys = false; 
+    boolean debugMode = false; 
 
     // FPS
     int FPS = 60;
 
     // SYSTEM
     Thread windowThread;
+    Renderer renderer;
 
     // Bild-Objekt
     private BufferedImage image;
@@ -46,15 +47,8 @@ public class WindowPanel extends JPanel implements Runnable {
         try {
             image = ImageIO.read(new File("src/main/res/galaxy.png")); 	// Bild laden
             
-            //List<Layer.Coordinate> coordinates = Layer.createSquare(100, 100, 5);
-            List<Layer.Coordinate3D> coordinates = BasicGeometry.createShape();
+            renderer = new Renderer(this, image);
             
-            // Layer mit Bild und Koordinaten erstellen
-            layer = new Layer(coordinates, image, this);
-            //layer.setScaleFactor(0.5f); // Skalierung setzen
-            layer.setColorMultiplier(1.2f, 0.8f, 1.0f); // Farbwerte ändern
-            layer.setAlphaMultiplier(0.75f);
-            layer.setBaseScale(0.5f);
             
         } catch (IOException e) {
             e.printStackTrace();
@@ -96,32 +90,20 @@ public class WindowPanel extends JPanel implements Runnable {
     }
 
     public void update() {
-    	
-    	
-    	float redScale = redMultiplier = (float) Math.abs(Math.sin(System.currentTimeMillis() * 0.001));
-        float greenScale = (float) Math.abs(Math.cos(System.currentTimeMillis() * 0.001));
-        float blueScale = (float) Math.abs(Math.sin(System.currentTimeMillis() * 0.002));
-        
-        
-        layer.setColorMultiplier(redScale, greenScale, blueScale);
-        
-    	//layer.setColorMultiplier(1.0f, 0.35f, 0.0f);
-    	
-        //layer.setScaleFactor(layer.getScaleFactor() * 1.01f);
     }
 
     public void paintComponent(Graphics g) {
         super.paintComponent(g);
         
-        if(coordsys) {
-        g.setColor(Color.white);
-        g.drawRect(0, screenHeight / 2, screenWidth, 1);
-        g.drawRect(screenWidth / 2, 0, 1, screenHeight);
+        if(debugMode) {
+	        g.setColor(Color.white);
+	        g.drawRect(0, screenHeight / 2, screenWidth, 1);
+	        g.drawRect(screenWidth / 2, 0, 1, screenHeight);
         }
         
-        if (layer != null) {
-            layer.draw(g);  // Layer zeichnen
-        }
+        renderer.draw(g);
+
+        
         
     }
 }
