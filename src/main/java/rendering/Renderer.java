@@ -28,7 +28,7 @@ public class Renderer {
     private List<Layer> layers;
 
     private float focalLength = 300.0f;
-    float speed = 240.0f;
+    float speed = 480.0f;
     
     // Hier übergibst du auch, welche Textur genutzt werden soll (dies könnte je nach Layer variieren)
     private int textureId;
@@ -68,7 +68,7 @@ public class Renderer {
         	
             for (Layer.Coordinate3D coord : layer.getCoordinates()) { 
                 coord.z -= speed * deltaTime; 
-                if(coord.z == 2900 && !summonNewLayer) {
+                if(coord.z == 4900 && !summonNewLayer) {
                 	summonNewLayer = true;
                 	newLayers++;
                 }
@@ -79,8 +79,9 @@ public class Renderer {
         }
         
         for(int l = 0; l < newLayers; l++) {
-            float[] rgbaLayer1 = {0.0f, 1.0f, 0.0f, 1.0f};
-            layers.add(new Layer(rgbaLayer1));
+            float[] rgba = {1.0f, 1.0f, 1.0f, 1.0f};
+        	//float[] rgba = {(float) Math.random(), (float) Math.random(), (float) Math.random(), (float) Math.random()};
+            layers.add(0, new Layer(rgba));
         }
         
         if(removeLayer != null) {

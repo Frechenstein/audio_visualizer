@@ -57,6 +57,8 @@ public class AppRunner {
     //private int VIRTUAL_WIDTH = 1620; // 3:2
     private int VIRTUAL_HEIGHT = 1080;
     
+    private boolean debugMode = true;
+    
     private Renderer renderer;
     private ShaderProgram shader;
 
@@ -182,7 +184,7 @@ public class AppRunner {
             accumulator += frameTime;
             
             // Führe so lange update-Schritte aus, wie das Akkumulator-Zeit-Fenster füllt:
-            while (accumulator >= targetDeltaTime) {
+            while (accumulator >= targetDeltaTime && !debugMode) {
                 renderer.update((float) targetDeltaTime);
                 accumulator -= targetDeltaTime;
             }

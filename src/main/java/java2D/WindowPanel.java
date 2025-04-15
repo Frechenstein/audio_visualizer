@@ -47,7 +47,7 @@ public class WindowPanel extends JPanel implements Runnable {
             image = ImageIO.read(new File("src/main/res/galaxy.png")); 	// Bild laden
             
             //List<Layer.Coordinate> coordinates = Layer.createSquare(100, 100, 5);
-            List<Layer.Coordinate3D> coordinates = Layer.createShape();
+            List<Layer.Coordinate3D> coordinates = BasicGeometry.createShape();
             
             // Layer mit Bild und Koordinaten erstellen
             layer = new Layer(coordinates, image, this);

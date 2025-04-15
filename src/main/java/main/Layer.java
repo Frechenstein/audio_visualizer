@@ -50,7 +50,7 @@ public class Layer {
     
     public static ArrayList<Coordinate3D> createSquare() {
         ArrayList<Coordinate3D> coordinates = new ArrayList<>();
-        float initZ = 3000; // Start-Tiefe, je weiter, desto kleiner erscheint das Bild
+        float initZ = 500; // Start-Tiefe, je weiter, desto kleiner erscheint das Bild
         
         coordinates.add(new Coordinate3D(260, 0, initZ));
         coordinates.add(new Coordinate3D(0, 260, initZ));
