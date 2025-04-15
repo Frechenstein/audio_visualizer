@@ -51,13 +51,13 @@ public class AppRunner {
     // Fensterbreite und -höhe (können dynamisch sein)
     private int windowWidth = 1920;
     private int windowHeight = 1080;
-    private boolean fullscreen = true;
+    private boolean fullscreen = false;
     
     private int VIRTUAL_WIDTH = 1920; // 16:9
     //private int VIRTUAL_WIDTH = 1620; // 3:2
     private int VIRTUAL_HEIGHT = 1080;
     
-    private boolean debugMode = true;
+    private boolean debugMode = false;
     
     private Renderer renderer;
     private ShaderProgram shader;
@@ -163,6 +163,7 @@ public class AppRunner {
     	glViewport(vpX, vpY, vpWidth, vpHeight);
     }
     */
+
     
     public int getShaderProgram() {
     	return shaderProgram;

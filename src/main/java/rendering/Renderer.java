@@ -79,8 +79,8 @@ public class Renderer {
         }
         
         for(int l = 0; l < newLayers; l++) {
-            float[] rgba = {1.0f, 1.0f, 1.0f, 1.0f};
-        	//float[] rgba = {(float) Math.random(), (float) Math.random(), (float) Math.random(), (float) Math.random()};
+            //float[] rgba = {1.0f, 1.0f, 1.0f, 1.0f};
+        	float[] rgba = {(float) Math.random(), (float) Math.random(), (float) Math.random(), (float) Math.random()};
             layers.add(0, new Layer(rgba));
         }
         
