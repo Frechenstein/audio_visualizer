@@ -24,14 +24,17 @@ public class Renderer {
     
     private int windowWidth, windowHeight;
     AppRunner ar;
+    
+    private int textureId;
 	
     private List<Layer> layers;
 
     private float focalLength = 300.0f;
     float speed = 480.0f;
     
-    // Hier übergibst du auch, welche Textur genutzt werden soll (dies könnte je nach Layer variieren)
-    private int textureId;
+    private float rotationAngle = 0.0f; 
+    float rotationSpeed = 25.0f;
+    int rotationMode = 0; // 0: no rotation, 1: whole shape rotates, 2: layers rotate separate
     
     private float baseScale = 0.15f;
     
@@ -76,6 +79,14 @@ public class Renderer {
                     removeLayer = layer;
                 }
             }
+            
+            if(rotationMode == 2) {
+            	float angle = layer.getRotationAngle() + rotationSpeed * deltaTime;
+                if (angle >= 360.0f) {
+                    angle -= 360.0f;
+                }
+                layer.setRotationAngle(angle);
+            }
         }
         
         for(int l = 0; l < newLayers; l++) {
@@ -88,50 +99,71 @@ public class Renderer {
         	layers.remove(removeLayer);
         }
         
-        
+        if(rotationMode == 1) {
+            rotationAngle += rotationSpeed * deltaTime;
+            if (rotationAngle >= 360.0f) {
+                rotationAngle -= 360.0f;
+            }
+        }
+   
     }
     
     // Rendert alle Layer
     public void render() {
-        glUseProgram(ar.getShaderProgram());  // Ersetze durch deinen Shader-Programm-Handle
+        glUseProgram(ar.getShaderProgram()); 
         
-        // Setze das Fenster-/Seitenverhältnis als Uniform, wenn nötig:
         int aspectLocation = glGetUniformLocation(ar.getShaderProgram(), "aspect");
         glUniform1f(aspectLocation, (float) windowWidth / windowHeight);
         
         glActiveTexture(GL_TEXTURE0);
         glBindTexture(GL_TEXTURE_2D, textureId);
         
-        // Mittlere Bildschirmkoordinaten
         float centerX = windowWidth / 2.0f;
         float centerY = windowHeight / 2.0f;
         
-        // Für jeden Layer die Farbe als Uniform setzen
+        float angleRad = 0.0f;
+        float cosAngle = 1.0f;
+        float sinAngle = 0.0f;
+        
+        if(rotationMode == 0 || rotationMode == 1) {
+            angleRad = (float) Math.toRadians(rotationAngle);
+            cosAngle = (float) Math.cos(angleRad);
+            sinAngle = (float) Math.sin(angleRad);
+            /*System.out.println("RotAngle: " + rotationAngle + " angleRad: " 
+                    + angleRad + " cosAngle: " + cosAngle + " sinAngle: " + sinAngle);*/
+        }
+        
         for (Layer layer : layers) {
             int colorLocation = glGetUniformLocation(ar.getShaderProgram(), "layerColor");
             glUniform4f(colorLocation, layer.getColor()[0], layer.getColor()[1], layer.getColor()[2], layer.getColor()[3]);
             
-            // Nun iteriere über jede 3D-Koordinate in diesem Layer:
             for (Layer.Coordinate3D coord : layer.getCoordinates()) {
-                // Berechne den perspektivischen Skalierungsfaktor
+            	
+            	if(rotationMode == 2) {
+                    angleRad = (float) Math.toRadians(layer.getRotationAngle());
+                    cosAngle = (float) Math.cos(angleRad);
+                    sinAngle = (float) Math.sin(angleRad);
+            	}
+
                 float computedScale = focalLength / coord.z;
-                // Multipliziere mit dem globalen Basis-Skalierungsfaktor:
-                float finalScale = computedScale * baseScale;
+                float finalScale = computedScale * baseScale; 
                 
-                // Berechne die Bildschirmposition:
-                float screenX = centerX + (coord.x * computedScale);
-                float screenY = centerY - (coord.y * computedScale);  // y-Achse invertiert (OpenGL Koordinatensystem)
+                float rotatedX = cosAngle * coord.x - sinAngle * coord.y;
+                float rotatedY = sinAngle * coord.x + cosAngle * coord.y;
+
+                float screenX = centerX + (rotatedX * computedScale);
+                float screenY = centerY - (rotatedY * computedScale);
                 
-             // Beispiel für die Berechnung des Offsets aus den Bildschirmkoordinaten:
+        
                 float ndcX = (screenX / (windowWidth / 2.0f)) - 1.0f;
                 float ndcY = 1.0f - (screenY / (windowHeight / 2.0f));
-                // Jetzt setze den Uniform "offset"
+
                 int offsetLocation = glGetUniformLocation(ar.getShaderProgram(), "offset");
                 glUniform2f(offsetLocation, ndcX, ndcY);
                 int scaleLocation = glGetUniformLocation(ar.getShaderProgram(), "scale");
                 glUniform1f(scaleLocation, finalScale);
                 
-                // Zeichne dann ein Quad an dieser Position
+             
                 glBindVertexArray(ar.getVaoId());
                 glDrawArrays(GL_TRIANGLES, 0, 6);
                 glBindVertexArray(0);

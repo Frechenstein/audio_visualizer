@@ -10,6 +10,8 @@ public class Layer {
 	private ArrayList<Coordinate3D> coordinates;
 	
 	private float[] rgba = new float[4];
+	private float rotationAngle = 0.0f;
+	
 	
 	public Layer(float[] rgba) {
 		for(int i = 0; i < this.rgba.length; i++) {
@@ -32,6 +34,15 @@ public class Layer {
 		for(int i = 0; i < this.rgba.length; i++) {
 			this.rgba[i] = rgba[i];
 		}
+	}
+	
+	// GETTER AND SETTER FOR ROTATION
+	public float getRotationAngle() {
+		return rotationAngle;
+	}
+	
+	public void setRotationAngle(float rotAngle) {
+		this.rotationAngle = rotAngle;
 	}
 	
 	public static class Coordinate3D  {

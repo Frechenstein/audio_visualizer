@@ -52,6 +52,7 @@ public class AppRunner {
     private int windowWidth = 1920;
     private int windowHeight = 1080;
     private boolean fullscreen = false;
+    private boolean surface = true;
     
     private int VIRTUAL_WIDTH = 1920; // 16:9
     //private int VIRTUAL_WIDTH = 1620; // 3:2
@@ -85,6 +86,8 @@ public class AppRunner {
         Long monitor = NULL;
         
         if(fullscreen) {
+        	if(surface) VIRTUAL_WIDTH = 1620;
+        	
         	// Hole alle verfügbaren Monitore
         	PointerBuffer monitors = glfwGetMonitors();
         	if (monitors == null || monitors.limit() == 0) {
