@@ -30,11 +30,13 @@ public class Renderer {
     private int textureId;
 	
     private List<Layer> layers;
-    public int initZ = 5000;
+    public int initZ = 0;
     int layerDistance = 100;
+    int initFrontLayerDistance = 500;
+    private float zAccumulator = 0.0f;
 
     private float focalLength = 300.0f;
-    float speed = 480.0f;
+    float speed = 30.0f;
     
     Effects effects;
     
@@ -45,7 +47,7 @@ public class Renderer {
      * 1-3: whole shape rotates; 1: clockwise; 2: counterclockwise; 3: back and forth
      * 4-6: every layer has  rotation; 4: counterclockwise; 5; clockwise; 6: back and forth
      */
-    int rotationMode = 6; 
+    int rotationMode = 0; 
     
     private float baseScale = 0.15f;
     
@@ -57,13 +59,16 @@ public class Renderer {
         
         timer = new Timer(15.0);
         
-        layers = new ArrayList<>();
         effects = new Effects(this);
-        
         this.initZ = initZ;
         
-        float[] rgba = {1.0f, 1.0f, 1.0f, 1.0f};
-        layers.add(new Layer(rgba, initZ));
+        if(ar.debugMode) {
+        	layers = new ArrayList<>();
+        	float[] rgba = {1.0f, 1.0f, 1.0f, 1.0f};
+        	layers.add(new Layer(rgba, 500));
+        } else {
+            layers = effects.createInitialLayers();
+        }
         
         if(rotationMode < 0) {
         	rotationMode = 0;
@@ -93,32 +98,44 @@ public class Renderer {
     	}
     	*/
     	
+    	if(!effects.isInitialized()) {
+    		effects.updateFadeAlpha(deltaTime);
+    	}
+    	
     	int newLayers = 0;
     	Layer removeLayer = null;
     	
-        for (Layer layer : layers) {
-        	
-        	boolean summonNewLayer = false;
-        	
-            for (Layer.Coordinate3D coord : layer.getCoordinates()) { 
-                coord.z -= speed * deltaTime; 
-                if(coord.z == initZ - layerDistance && !summonNewLayer) {
-                	summonNewLayer = true;
-                	newLayers++;
-                }
-                if(coord.z < 30) {
-                    removeLayer = layer;
-                }
-            }
-            
-            if(rotationMode - 3 > 0) {
-            	layer.setRotationAngle(effects.calculateLayerAngle(layer, deltaTime));
-            }
-        }
+    	float zMovement = speed * deltaTime;
+    	zAccumulator += zMovement;
+
+    	while (zAccumulator >= layerDistance) {
+    	    zAccumulator -= layerDistance;
+    	    newLayers++;
+    	}
+    	
+    	for (Layer layer : layers) {
+
+    	    boolean removeThis = false;
+
+    	    for (Layer.Coordinate3D coord : layer.getCoordinates()) {
+    	        coord.z -= zMovement;
+    	        if (coord.z < 30) {
+    	            removeThis = true;
+    	        }
+    	    }
+
+    	    if (removeThis) {
+    	        removeLayer = layer;
+    	    }
+
+    	    if (rotationMode - 3 > 0) {
+    	        layer.setRotationAngle(effects.calculateLayerAngle(layer, deltaTime));
+    	    }
+    	}
         
         for(int l = 0; l < newLayers; l++) {
             //float[] rgba = {1.0f, 1.0f, 1.0f, 1.0f};
-        	float[] rgba = {(float) Math.random(), (float) Math.random(), (float) Math.random(), (float) Math.random()};
+        	float[] rgba = effects.generateRandomRGBA();
             layers.add(0, new Layer(rgba, initZ));
         }
         
@@ -182,11 +199,43 @@ public class Renderer {
                 int scaleLocation = glGetUniformLocation(ar.getShaderProgram(), "scale");
                 glUniform1f(scaleLocation, finalScale);
                 
-             
                 glBindVertexArray(ar.getVaoId());
                 glDrawArrays(GL_TRIANGLES, 0, 6);
                 glBindVertexArray(0);
             }
         }
+        
+        if(!effects.isInitialized() && !ar.debugMode) {
+        	renderFadeLayer();
+        }
+        
     }
+    
+    public void renderFadeLayer() {
+        float fadeAlpha = effects.getFadeAlpha();
+
+        // Kein Texturbild verwenden – nur Farbe
+        glBindTexture(GL_TEXTURE_2D, 0);
+
+        // Hole Uniform-Locations
+        int shader = ar.getShaderProgram();
+        int colorLocation = glGetUniformLocation(shader, "layerColor");
+        int offsetLocation = glGetUniformLocation(shader, "offset");
+        int scaleLocation = glGetUniformLocation(shader, "scale");
+        int aspectLocation = glGetUniformLocation(shader, "aspect");
+
+        // 🟡 Wichtig: Werte "neutral" setzen, damit du den kompletten Bildschirm überdeckst
+        glUniform4f(colorLocation, 0.0f, 0.0f, 0.0f, fadeAlpha); // Schwarz mit transparenz
+        glUniform2f(offsetLocation, 0.0f, 0.0f);                 // Kein Versatz
+        glUniform1f(scaleLocation, 2.0f);                        // Keine Skalierung
+        glUniform1f(aspectLocation, 1.0f);                       // Kein Seitenverhältnis-Einfluss
+
+        // Zeichne Vollbild-Quad (VAO ist das gleiche wie für normale Layer)
+        glBindVertexArray(ar.getVaoId());
+        glDrawArrays(GL_TRIANGLES, 0, 6);
+        glBindVertexArray(0);
+    }
+
+
+
 }

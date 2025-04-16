@@ -53,18 +53,18 @@ public class AppRunner {
     private int windowWidth = 1920;
     private int windowHeight = 1080;
     private boolean fullscreen = false;
-    private boolean surface = false;
+    private boolean surface = true;
     
     private int VIRTUAL_WIDTH = 1920; // 16:9
     //private int VIRTUAL_WIDTH = 1620; // 3:2
     private int VIRTUAL_HEIGHT = 1080;
     
-    private int initZ = 5000;
+    private int initZ = 10000;
     
     private Renderer renderer;
     private ShaderProgram shader;
     
-    private boolean debugMode = false;
+    public boolean debugMode = false;
 
     public void run() {
         init();
@@ -204,6 +204,7 @@ public class AppRunner {
             // Den Frame rendern
             glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
             renderer.render();
+            
             
             glfwSwapBuffers(window);
             glfwPollEvents();
