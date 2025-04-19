@@ -42,113 +42,82 @@ import rendering.Renderer;
 import rendering.ShaderProgram;
 import utility.Utils;
 
+/**
+ * Entry point and main loop of the application.
+ * Manages initialization of OpenGL, window creation, and the rendering loop.
+ */
 public class AppRunner {
 
+    /**
+     * GLFW window handle.
+     */
     private long window;
+
+    /**
+     * Shader program handle.
+     */
     private int shaderProgram;
+
+    /**
+     * Vertex Array Object handle.
+     */
     private int vaoId;
+
+    /**
+     * OpenGL texture handle.
+     */
     private int textureId;
 
+    /**
+     * Target FPS for the render loop.
+     */
     private float FPS;
 
+    /**
+     * Main renderer instance.
+     */
     private Renderer renderer;
+
+    /**
+     * Shader program manager.
+     */
     private ShaderProgram shader;
 
+    /**
+     * Enables debug mode if true.
+     */
     public boolean debugMode;
 
+    /**
+     * Starts the application. Initializes context, enters render loop, and cleans up.
+     */
     public void run() {
         init();
         loop();
         cleanup();
     }
 
+    /**
+     * Initializes GLFW, OpenGL context, shader, VAO and texture resources.
+     */
     private void init() {
-        Config cfg = Config.get();
+        AppInitializer initializer = new AppInitializer();
+        initializer.init();
 
-        this.debugMode = cfg.DEBUG_MODE;
+        this.window = initializer.getWindow();
+        this.shader = initializer.getShader();
+        this.shaderProgram = shader.getShaderProgram();
+        this.vaoId = initializer.getVaoId();
+        this.textureId = initializer.getTextureId();
+        this.debugMode = initializer.isDebugMode();
+        this.FPS = initializer.getFPS();
 
-        // create error callback
-        GLFWErrorCallback.createPrint(System.err).set();
-
-        if (!glfwInit()) {
-            throw new IllegalStateException("GLFW initialisation failed");
-        }
-
-        // Fenster-Hinweise (OpenGL 3.3 Core)
-        glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
-        glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
-        glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
-        // Für MacOS: glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
-        
-        Long monitor = NULL;
-        
-        if(cfg.fullscreen && !debugMode) {
-        	if(cfg.SURFACE_MODE) cfg.virtualWidth = cfg.surfaceVirtualWidth;
-
-        	PointerBuffer monitors = glfwGetMonitors();
-        	if (monitors == null || monitors.limit() == 0) {
-        	    throw new RuntimeException("Keine Monitore gefunden");
-        	}
-
-        	// choose screen for fullscreen if present - else primary screen
-        	if (monitors.limit() >= 2) {
-        		monitor = monitors.get(cfg.screenIndex);
-        	} else {
-        		monitor = glfwGetPrimaryMonitor();
-        	}
-
-        	var vidMode = glfwGetVideoMode(monitor);
-
-        	// dimensions based on chosen screen
-        	cfg.windowWidth = vidMode.width();
-        	cfg.windowHeight = vidMode.height();
-        }
-
-        // create window
-        window = glfwCreateWindow(cfg.windowWidth, cfg.windowHeight, cfg.WINDOW_TITLE, monitor, NULL);
-        if (window == NULL) {
-            throw new RuntimeException("Creation of window failed");
-        }
-
-        glfwMakeContextCurrent(window);
-        glfwSwapInterval(cfg.V_SYNC); // V-Sync
-        glfwShowWindow(window);
-
-        GL.createCapabilities();
-
-        glViewport(0, 0, cfg.windowWidth, cfg.windowHeight);
-
-        glEnable(GL_BLEND);
-        glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-
-        // create shader program
-        shader = new ShaderProgram();
-        shaderProgram = shader.getShaderProgram();
-
-        // create quad (VBO/VAO) for the texture
-        vaoId = Quad.createQuad();
-
-        // loading texture
-        textureId = Utils.loadTexture(cfg.TEXTURE_PATH);
-        
-        if(debugMode) {
-            this.FPS = cfg.debugFps;
-        	cfg.initZ = cfg.debugInitZ;
-        } else {
-            this.FPS = cfg.fps;
-        }
-        
-        this.renderer = new Renderer(this, textureId, cfg);
-    }
-    
-    public int getShaderProgram() {
-    	return shaderProgram;
-    }
-    
-    public int getVaoId() {
-    	return vaoId;
+        this.renderer = new Renderer(this, textureId, Config.get());
     }
 
+    /**
+     * Main rendering loop. Manages frame timing and calls update/render logic.
+     */
     private void loop() {
         double targetDeltaTime = 1.0 / FPS;
         double lastTime = glfwGetTime();
@@ -176,6 +145,9 @@ public class AppRunner {
         }
     }
 
+    /**
+     * Cleans up all OpenGL and GLFW resources before shutdown.
+     */
     private void cleanup() {
         glDeleteProgram(shaderProgram);
         glDeleteVertexArrays(vaoId);
@@ -184,6 +156,23 @@ public class AppRunner {
         glfwTerminate();
     }
 
+    /**
+     * Returns the OpenGL shader program ID.
+     */
+    public int getShaderProgram() {
+        return shaderProgram;
+    }
+
+    /**
+     * Returns the VAO ID used for rendering.
+     */
+    public int getVaoId() {
+        return vaoId;
+    }
+
+    /**
+     * Application entry point.
+     */
     public static void main(String[] args) {
         new AppRunner().run();
     }

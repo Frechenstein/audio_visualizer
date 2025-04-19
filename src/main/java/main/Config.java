@@ -8,7 +8,7 @@ public final class Config {
     /**
      * ===== SYSTEM SETTINGS =====
      */
-    public boolean fullscreen = false;
+    public boolean fullscreen = true;
     // <editor-fold desc="SYSTEM SETTINGS">
     public final String WINDOW_TITLE = "AudioVis";
 
@@ -53,14 +53,14 @@ public final class Config {
     public final float FOCAL_LENGTH = 300.0f;
 
     public final float START_SPEED = 30.0f;
-    public final float IDLE_SPEED = 450.0f;
+    public final float IDLE_SPEED = 500.0f;
     // </editor-fold>
 
     /**
      * ===== DYNAMIC PARAMETERS =====
      */
     // <editor-fold desc="DYNAMIC PARAMETERS">
-    public int initZ = 5000;
+    public int initZ = 10000;
 
     // </editor-fold>
 

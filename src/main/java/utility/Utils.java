@@ -25,12 +25,17 @@ import java.nio.IntBuffer;
 import org.lwjgl.stb.STBImage;
 import org.lwjgl.system.MemoryStack;
 
+/**
+ * Utility functions for loading OpenGL textures using STBImage.
+ */
 public class Utils {
-	
+
     /**
-     * Lädt eine PNG-Datei mithilfe von STBImage und erstellt eine OpenGL-Textur.
-     * Es wird mit 4 Kanälen (RGBA) geladen, damit dein Bild einen Alphakanal hat.
-     * Der Pfad muss relativ zum Projekt sein.
+     * Loads a PNG file using STBImage and creates an OpenGL texture.
+     * Texture is configured with linear filtering and mipmaps.
+     *
+     * @param filePath The path to the PNG file.
+     * @return The OpenGL texture ID.
      */
 	public static int loadTexture(String filePath) {
         int texId;

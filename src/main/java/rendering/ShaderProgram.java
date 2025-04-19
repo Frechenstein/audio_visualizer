@@ -17,21 +17,29 @@ import static org.lwjgl.opengl.GL20.glGetShaderi;
 import static org.lwjgl.opengl.GL20.glLinkProgram;
 import static org.lwjgl.opengl.GL20.glShaderSource;
 
+/**
+ * Compiles and links a basic shader program consisting of a vertex and fragment shader.
+ */
 public class ShaderProgram {
 	
 	int shaderProgram;
-	
+
+    /**
+     * Initializes the shader program upon construction.
+     */
 	public ShaderProgram() {
 		createShaderProgram();
 	}
-	
+
+    /**
+     * Returns the linked shader program ID.
+     */
 	public int getShaderProgram() {
 		return shaderProgram;
 	}
-	
+
     /**
-     * Erstellt ein einfaches Shader-Programm mit Vertex- und Fragment-Shader.
-     * Der Vertex-Shader erhält eine Uniform "scale" (Zoom) sowie "aspect" für die Korrektur des Seitenverhältnisses.
+     * Creates, compiles and links a shader program with basic transformations and texture sampling.
      */
     private void createShaderProgram() {
     	String vertexShaderSource =

@@ -11,11 +11,15 @@ import static org.lwjgl.opengl.GL20.glVertexAttribPointer;
 import static org.lwjgl.opengl.GL30.glBindVertexArray;
 import static org.lwjgl.opengl.GL30.glGenVertexArrays;
 
+/**
+ * Provides a method to generate a simple textured quad for rendering.
+ */
 public class Quad {
-	
+
     /**
-     * Erzeugt ein VAO und VBO für ein einfaches Quad, bestehend aus zwei Dreiecken.
-     * Die Vertex-Daten beinhalten die Position und die Texturkoordinaten.
+     * Creates a VAO and VBO for a quad made of two triangles with position and texture coordinates.
+     *
+     * @return The generated VAO ID.
      */
     public static int createQuad() {
         // Vertex-Daten: Position (x, y) und TexCoords (s, t)
