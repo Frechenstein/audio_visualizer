@@ -3,37 +3,72 @@ package rendering;
 import java.util.ArrayList;
 
 import main.Layer;
+import main.Config;
 
 public class Effects {
 	
 	Renderer renderer;
+
+	private float fadeAlpha;
+	private float fadeSpeed;
+	private boolean initialized = false;
+
+	private float alphaClamp;
 	
-	private float speed = 450.0f;
+	private float idleSpeed;
+
+	int initFrontLayerDistance;
+
+	int initZ;
+	private int layerDistance;
+
+	private float wholeRotationSpeed;
+	private float wholeOscillationSpeed;
+    private float wholeSwingAmplitude;
+	private float wholeRotationTime;
+
+	private float layerRotationSpeed;
+	private float layerOscillationSpeed;
+	private float layerSwingAmplitude;
 	
-	private float oszilatorSpeed = 0.35f;
-    private float swingAmplitude = 25.0f;
-	private float time = 0.0f;
-	
-	private float layerRotationSpeed = 20.0f;
-	private float layerOszilationSpeed = 0.8f;
-	private float layerSwingAmplitude = 30.0f;
-	
-    private float fadeAlpha = 1.0f;
-    private float fadeSpeed = 0.25f; // Alpha pro Sekunde
-    private boolean initialized = false;
-	
-	public Effects(Renderer renderer) {
+	public Effects(Renderer renderer, Config cfg) {
 		this.renderer = renderer;
+		initializeSettings(cfg);
+
+
+	}
+
+	private void initializeSettings(Config cfg) {
+		this.fadeAlpha = cfg.INIT_FADE_ALPHA;
+		this.fadeSpeed = cfg.FADE_SPEED;
+
+		this.idleSpeed = cfg.IDLE_SPEED;
+		this.initFrontLayerDistance = cfg.INIT_FRONT_DISTANCE;
+
+		this.alphaClamp = cfg.idleAlphaClamp;
+
+		this.initZ = cfg.initZ;
+		this.layerDistance = cfg.LAYER_DISTANCE;
+
+		this.wholeRotationSpeed = cfg.wholeRotationSpeed;
+		this.wholeOscillationSpeed = cfg.wholeOscillationSpeed;
+		this.wholeSwingAmplitude = cfg.wholeSwingAmplitude;
+		this.wholeRotationTime = 0.0f;
+
+		this.layerRotationSpeed = cfg.layerRotationSpeed;
+		this.layerOscillationSpeed = cfg.layerOscillationSpeed;
+		this.layerSwingAmplitude = cfg.layerSwingAmplitude;
+
 	}
 	
 	public ArrayList<Layer> createInitialLayers() {
-		int currentZ = renderer.initFrontLayerDistance;
+		int currentZ = initFrontLayerDistance;
 		ArrayList<Layer> layers = new ArrayList<>();
 		
-		while(currentZ < renderer.initZ) {
+		while(currentZ < initZ) {
         	float[] rgba = generateRandomRGBA();
             layers.add(new Layer(rgba, currentZ));
-            currentZ += renderer.layerDistance;
+            currentZ += layerDistance;
 		}
 		
 		return layers;
@@ -45,7 +80,7 @@ public class Effects {
     		fadeAlpha = 0.0f;
             initialized = true;
         }
-    	if(renderer.speed < speed) {
+    	if(renderer.speed < idleSpeed) {
     		renderer.speed += 1.0f;
         }
     }
@@ -62,14 +97,14 @@ public class Effects {
     	float alpha = clampAlpha((float) Math.random());
     	float[] rgba = {(float) Math.random(), 
     			(float) Math.random(), 
-    			(float) Math.random(), 
-    			alpha};
+    			(float) Math.random(),
+				alpha};
     	return rgba;
     }
     
     public float clampAlpha(float alpha) {
-    	if(alpha < 0.2f) {
-    		alpha = 0.25f;
+    	if(alpha < alphaClamp) {
+    		alpha = alphaClamp;
     	}
     	return alpha;
     }
@@ -78,14 +113,14 @@ public class Effects {
 		
         switch(renderer.rotationMode) {
     	case 1:
-    		rotationAngle -= renderer.rotationSpeed * deltaTime;
+    		rotationAngle -= wholeRotationSpeed * deltaTime;
     		break;
     	case 2:
-    		rotationAngle += renderer.rotationSpeed * deltaTime;
+    		rotationAngle += wholeRotationSpeed * deltaTime;
     		break;
     	case 3:
-    	    time += deltaTime;
-    	    rotationAngle = (float) (Math.sin(time * oszilatorSpeed) * swingAmplitude);
+    	    wholeRotationTime += deltaTime;
+    	    rotationAngle = (float) (Math.sin(wholeRotationTime * wholeOscillationSpeed) * wholeSwingAmplitude);
     		break;
         }
     		
@@ -106,7 +141,7 @@ public class Effects {
 	        break;
 		case 6:
 			layer.time += deltaTime;
-		    rotationAngle = (float) (Math.sin(layer.time * layerOszilationSpeed) * layerSwingAmplitude);
+		    rotationAngle = (float) (Math.sin(layer.time * layerOscillationSpeed) * layerSwingAmplitude);
 		    break;
 	    }
 	    

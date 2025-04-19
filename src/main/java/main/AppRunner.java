@@ -49,22 +49,12 @@ public class AppRunner {
     private int vaoId;
     private int textureId;
 
-    // Fensterbreite und -höhe (können dynamisch sein)
-    private int windowWidth = 1920;
-    private int windowHeight = 1080;
-    private boolean fullscreen = false;
-    private boolean surface = true;
-    
-    private int VIRTUAL_WIDTH = 1920; // 16:9
-    //private int VIRTUAL_WIDTH = 1620; // 3:2
-    private int VIRTUAL_HEIGHT = 1080;
-    
-    private int initZ = 10000;
-    
+    private float FPS;
+
     private Renderer renderer;
     private ShaderProgram shader;
-    
-    public boolean debugMode = false;
+
+    public boolean debugMode;
 
     public void run() {
         init();
@@ -73,7 +63,11 @@ public class AppRunner {
     }
 
     private void init() {
-        // Fehler-Callback einrichten
+        Config cfg = Config.get();
+
+        this.debugMode = cfg.DEBUG_MODE;
+
+        // create error callback
         GLFWErrorCallback.createPrint(System.err).set();
 
         if (!glfwInit()) {
@@ -88,93 +82,64 @@ public class AppRunner {
         
         Long monitor = NULL;
         
-        if(fullscreen && !debugMode) {
-        	if(surface) VIRTUAL_WIDTH = 1620;
-        	
-        	// Hole alle verfügbaren Monitore
+        if(cfg.fullscreen && !debugMode) {
+        	if(cfg.SURFACE_MODE) cfg.virtualWidth = cfg.surfaceVirtualWidth;
+
         	PointerBuffer monitors = glfwGetMonitors();
         	if (monitors == null || monitors.limit() == 0) {
         	    throw new RuntimeException("Keine Monitore gefunden");
         	}
 
-        	// Wähle den gewünschten Monitor aus (z.B. 2. Monitor, falls vorhanden)
+        	// choose screen for fullscreen if present - else primary screen
         	if (monitors.limit() >= 2) {
-        		monitor = monitors.get(0); // Index 1 entspricht dem zweiten Monitor
+        		monitor = monitors.get(cfg.screenIndex);
         	} else {
-        		monitor = glfwGetPrimaryMonitor(); // Fallback auf den primären Monitor
+        		monitor = glfwGetPrimaryMonitor();
         	}
 
-        	// Hole den Video-Modus des ausgewählten Monitors
         	var vidMode = glfwGetVideoMode(monitor);
 
-        	// Setze Fensterbreite und -höhe anhand des gewählten Monitors
-        	windowWidth = vidMode.width();
-        	windowHeight = vidMode.height();
+        	// dimensions based on chosen screen
+        	cfg.windowWidth = vidMode.width();
+        	cfg.windowHeight = vidMode.height();
         }
 
-        // Fenster erstellen
-        window = glfwCreateWindow(windowWidth, windowHeight, "AudioVis", monitor, NULL);
+        // create window
+        window = glfwCreateWindow(cfg.windowWidth, cfg.windowHeight, cfg.WINDOW_TITLE, monitor, NULL);
         if (window == NULL) {
             throw new RuntimeException("Creation of window failed");
         }
 
         glfwMakeContextCurrent(window);
-        glfwSwapInterval(1); // V-Sync
+        glfwSwapInterval(cfg.V_SYNC); // V-Sync
         glfwShowWindow(window);
 
-        // OpenGL-Funktionen laden
         GL.createCapabilities();
 
-        // Setze den Viewport explizit
-        glViewport(0, 0, windowWidth, windowHeight);
+        glViewport(0, 0, cfg.windowWidth, cfg.windowHeight);
 
-        // Blending aktivieren (für transparente Bereiche)
         glEnable(GL_BLEND);
         glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
-        // Shader-Programm erstellen
+        // create shader program
         shader = new ShaderProgram();
         shaderProgram = shader.getShaderProgram();
 
-        // Erstelle ein Quad (VBO/VAO) für die Textur
+        // create quad (VBO/VAO) for the texture
         vaoId = Quad.createQuad();
 
-        // Lade die Textur (128x128, mit transparentem Hintergrund)
-        textureId = Utils.loadTexture("src/main/res/galaxy.png");
-        //textureId = Utils.loadTexture("src/main/res/time.png");
+        // loading texture
+        textureId = Utils.loadTexture(cfg.TEXTURE_PATH);
         
         if(debugMode) {
-        	initZ = 500;
+            this.FPS = cfg.debugFps;
+        	cfg.initZ = cfg.debugInitZ;
+        } else {
+            this.FPS = cfg.fps;
         }
         
-        this.renderer = new Renderer(this, textureId, VIRTUAL_WIDTH, VIRTUAL_HEIGHT, initZ);
+        this.renderer = new Renderer(this, textureId, cfg);
     }
-    
-    /**
-     * Unfinished - too much lag when using 
-     */
-    /*
-    private void updateViewport() {
-    	double targetAspect = (double) VIRTUAL_WIDTH / VIRTUAL_HEIGHT;
-    	double windowAspect = (double) windowWidth / windowHeight;
-    	
-    	int vpX = 0;
-    	int vpY = 0;
-    	int vpWidth = windowWidth;
-    	int vpHeight = windowHeight;
-    	
-    	if(windowAspect > targetAspect) {
-    		vpWidth = (int)(windowHeight * targetAspect);
-    		vpX = (windowWidth - vpWidth) / 2;
-    	} else if (windowAspect < targetAspect) {
-    		vpHeight = (int)(windowWidth / targetAspect);
-    		vpY = (windowHeight - vpHeight) / 2;
-    	}
-    	
-    	glViewport(vpX, vpY, vpWidth, vpHeight);
-    }
-    */
-
     
     public int getShaderProgram() {
     	return shaderProgram;
@@ -185,7 +150,7 @@ public class AppRunner {
     }
 
     private void loop() {
-        double targetDeltaTime = 1.0 / 120.0; // 60 Updates pro Sekunde
+        double targetDeltaTime = 1.0 / FPS;
         double lastTime = glfwGetTime();
         double accumulator = 0.0;
         
@@ -195,13 +160,13 @@ public class AppRunner {
             lastTime = currentTime;
             accumulator += frameTime;
             
-            // Führe so lange update-Schritte aus, wie das Akkumulator-Zeit-Fenster füllt:
+            // update
             while (accumulator >= targetDeltaTime && !debugMode) {
                 renderer.update((float) targetDeltaTime);
                 accumulator -= targetDeltaTime;
             }
             
-            // Den Frame rendern
+            // rendering
             glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
             renderer.render();
             

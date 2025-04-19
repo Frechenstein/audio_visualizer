@@ -18,85 +18,90 @@ import java.util.List;
 
 import main.AppRunner;
 import main.Layer;
+import main.Config;
 import utility.Timer;
 
 public class Renderer {
-    
-    private int windowWidth, windowHeight;
+
     AppRunner ar;
-    
+    Effects effects;
     Timer timer;
+
+    private int windowWidth, windowHeight;
     
-    private int textureId;
+    private final int textureId;
+    private float baseScale;
 	
     private List<Layer> layers;
-    public int initZ = 0;
-    int layerDistance = 100;
-    int initFrontLayerDistance = 500;
-    private float zAccumulator = 0.0f;
+    private int initZ;
+    private int layerDistance;
+    private int removeLayerDistance;
+    private float zAccumulator;
 
-    private float focalLength = 300.0f;
-    float speed = 30.0f;
-    
-    Effects effects;
-    
-    private float rotationAngle = 0.0f; 
-    float rotationSpeed = 20.0f;
+    private float focalLength;
+    private float rotationAngle;
+    float speed;
+
     /**
      * 0: no rotation
      * 1-3: whole shape rotates; 1: clockwise; 2: counterclockwise; 3: back and forth
      * 4-6: every layer has  rotation; 4: counterclockwise; 5; clockwise; 6: back and forth
      */
-    int rotationMode = 0; 
+    int rotationMode = 0;
     
-    private float baseScale = 0.15f;
-    
-    public Renderer(AppRunner ar, int textureId, int windowWidth, int windowHeight, int initZ) {
+    public Renderer(AppRunner ar, int textureId, Config cfg) {
         this.ar = ar;
     	this.textureId = textureId;
-        this.windowWidth = windowWidth;
-        this.windowHeight = windowHeight;
-        
+
+        initializeSettings(cfg);
+
         timer = new Timer(15.0);
         
-        effects = new Effects(this);
-        this.initZ = initZ;
+        effects = new Effects(this, cfg);
         
         if(ar.debugMode) {
         	layers = new ArrayList<>();
-        	float[] rgba = {1.0f, 1.0f, 1.0f, 1.0f};
-        	layers.add(new Layer(rgba, 500));
+        	layers.add(new Layer(cfg.DEBUG_RGBA, cfg.debugInitZ));
         } else {
             layers = effects.createInitialLayers();
         }
-        
+    }
+
+    private void initializeSettings(Config cfg) {
+        this.windowWidth = cfg.virtualWidth;
+        this.windowHeight = cfg.virtualHeight;
+
+        this.baseScale = cfg.BASE_IMAGE_SCALE;
+
+        this.initZ = cfg.initZ;
+        this.layerDistance = cfg.LAYER_DISTANCE;
+        this.removeLayerDistance = cfg.REMOVE_LAYER_DISTANCE;
+
+        this.focalLength = cfg.FOCAL_LENGTH;
+
+        this.speed = cfg.START_SPEED;
+
+        this.zAccumulator = 0.0f;
+        this.rotationAngle = 0.0f;
+
         if(rotationMode < 0) {
-        	rotationMode = 0;
+            rotationMode = 0;
+        }
+        else if(rotationMode > 6) {
+            rotationMode = 0;
         }
     }
-    
-    public Renderer(List<Layer> layers, int textureId, int windowWidth, int windowHeight) {
-        this.layers = layers;
-        this.textureId = textureId;
-        this.windowWidth = windowWidth;
-        this.windowHeight = windowHeight;
-    }
-    
-    public void setBaseScale(float baseScale) {
-        this.baseScale = baseScale;
-    }
-    
-    // Aktualisiert ggf. Logik wie Bewegung in Z-Richtung (Zoom, etc.)
+
     public void update(float deltaTime) {
 
-    	/*
+
     	if(timer.isElapsed()) {
     		timer.reset();
     		if(rotationMode < 7) {
     			rotationMode++;
     		}
     	}
-    	*/
+
     	
     	if(!effects.isInitialized()) {
     		effects.updateFadeAlpha(deltaTime);
@@ -119,7 +124,7 @@ public class Renderer {
 
     	    for (Layer.Coordinate3D coord : layer.getCoordinates()) {
     	        coord.z -= zMovement;
-    	        if (coord.z < 30) {
+    	        if (coord.z < removeLayerDistance) {
     	            removeThis = true;
     	        }
     	    }
@@ -134,7 +139,6 @@ public class Renderer {
     	}
         
         for(int l = 0; l < newLayers; l++) {
-            //float[] rgba = {1.0f, 1.0f, 1.0f, 1.0f};
         	float[] rgba = effects.generateRandomRGBA();
             layers.add(0, new Layer(rgba, initZ));
         }
@@ -147,8 +151,7 @@ public class Renderer {
         	rotationAngle = effects.calculateRotationAngle(rotationAngle, deltaTime);
         }
     }
-    
-    // Rendert alle Layer
+
     public void render() {
         glUseProgram(ar.getShaderProgram()); 
         
@@ -235,7 +238,5 @@ public class Renderer {
         glDrawArrays(GL_TRIANGLES, 0, 6);
         glBindVertexArray(0);
     }
-
-
 
 }
